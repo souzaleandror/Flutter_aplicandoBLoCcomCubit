@@ -367,3 +367,871 @@ Utilizar as diretivas part e part of para unir dois arquivos diferentes: o prime
 Começamos o curso muito bem, construindo o código básico de um Cubit!
 
 Continuamos a feature na próxima aula, vejo você lá!
+
+#### 21/11/2023
+
+@02-O Cubit e a tela Home
+
+@@01
+Projeto da aula anterior
+
+Você pode revisar o seu código e acompanhar o passo a passo do desenvolvimento do nosso projeto e, se preferir, pode baixar o projeto da aula anterior.
+Bons estudos!
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/archive/refs/heads/Aula1.zip
+
+@@02
+Entendendo melhor o Cubit
+
+Vamos recapitular rapidamente o que fizemos na aula passada, começando pelo arquivo home_states.dart. Nele, temos uma representação de quais seriam os estados da nossa tela Home:
+part of 'home_cubit.dart';
+
+abstract class HomeStates {}
+
+class HomeInitial extends HomeStates {}
+
+class HomeLoading extends HomeStates {}
+
+class HomeSuccess extends HomeStates {}
+
+class HomeError extends HomeStates {}COPIAR CÓDIGO
+De início, temos uma classe abstrada chamada HomeStates, que será a representação total de cada um dos estados. Em seguida, temos os estados HomeInitial, HomeLoading, HomeSuccess e HomeError, que são classes que representam os possíveis estados da tela Home.
+
+HomeInitial será o estado inicial, em que nada foi carregado, assim que abrimos a aplicação. HomeLoading representa o estado de carregamento de informações da API. HomeSuccess é aplicado quando conseguimos recuperar todos os dados e mostrá-los na tela para a pessoa usuária. HomeError será o estado de erro, quando ocorre alguma falha, como um problema no carregamento de dados da API.
+
+A seguir, vamos conferir o arquivo home_cubit.dart:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+
+}COPIAR CÓDIGO
+Nele, criamos uma classe chamada HomeCubit que representa um Cubit em nosso aplicativo. Ele estende de Cubit<>. Nós já definimos o tipo de Cubit com o qual trabalharemos, ou seja, o tipo do estado com o qual lidaremos: o HomeStates — a representação dos possíveis estados que a tela terá. Depois, criamos um construtor HomeCubit com o superconstrutor passando qual o estado inicial, no caso, HomeInitial.
+
+Ao criar um Cubit, precisamos definir o tipo de estado com o qual ele lidará, seja um número inteiro ou uma string. Essa informação é muito importante para que, ao alterar o estado, não modifiquemos um número por outro objeto, por exemplo, de modo que o sistema terá dados inconsistentes. Ao tipar o Cubit, garantimos que lidaremos com o mesmo tipo de informação.
+
+O HomeCubit lidará com os estados da aplicação, portanto, ao tipar nosso Cubit, é importante que ele respeite esse padrão e seja um estado.
+
+Nesse arquivo, temos o construtor HomeCubit() e o superconstrutor com o HomeInitial inicializado. O "super" é onde passaremos qual é o estado inicial do Cubit, o que é uma informação essencial.
+
+Por exemplo, se o estado inicial fosse uma número inteiro, teríamos que trocar o tipo do Cubit de <HomeStates> para <int> e passar um número inteiro em super():
+
+// CÓDIGO DE EXEMPLO
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<int> {
+  HomeCubit() : super(0);
+
+}COPIAR CÓDIGO
+Nesse cenário, o HomeCubit tem como estado inicial o valor inteiro igual a 0.
+
+Outra opção seria seria inicializar por meio do construtor. Em vez de toda instância de HomeCubit terem o mesmo estado inicial, poderíamos alterá-los, passando pelo construtor. Por exemplo:
+
+// CÓDIGO DE EXEMPLO
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<int> {
+  HomeCubit(int valor) : super(valor);
+
+}COPIAR CÓDIGO
+Não é isso que queremos fazer no momento, então vamos manter o código como estava ao final da última aula, com o tipo `HomeStates:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+
+}COPIAR CÓDIGO
+Para alterar o valor dos estados, criaremos funções. É importante ressaltar que as funções que vão alterar o estado do Cubit não tem retorno, todas elas serão void.
+
+Mas por que alteramos o estado do HomeCubit? Para entender melhor, vamos supor que temos uma função chamada mudaEstado():
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+
+  void mudaEstado() {
+
+  }
+
+}COPIAR CÓDIGO
+Para alterar o estado, utilizaremos a função emit(), passando um valor novo ou devolvendo o estado atual:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+
+  void mudaEstado() {
+    emit(state);
+  }
+
+}COPIAR CÓDIGO
+Nesse caso, a variável state que ele mesmo criou é uma representação do estado atual do Cubit. Essa explicação pode ser um pouco confusa, então vamos revisar a seguir.
+
+Na linha 6, temos o construtor que foi inicializado com HomeInitial. O estado atual do Cubit é HomeInitial. Chamando a função mudaEstado(), temos a função emit() com a variável state. Como não houve nenhuma mudança em state, ela é o estado inicial. Ou seja, receberíamos o HomeInitial.
+
+Se quisermos trocar para outro estado, trocaremos o state para HomeLoading, por exemplo:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+
+  void mudaEstado() {
+    emit(HomeLoading);
+  }
+
+}COPIAR CÓDIGO
+Agora, o estado será HomeLoading, de carregamento. Ou seja, por meio dessas funções e da função emit(), conseguimos alterar o estado do B.L.O.C.
+
+Dessa forma, entendemos alguns conceitos do funcionamento do Cubit. Nosso próximo passo será colocar esses conhecimentos em prática para criar a função que responsável pela busca da API e alteração o estado do HomeCubit para cada um dos diferentes estados. Ou seja, teremos o HomeInitial em que nada acontece, pois é o estado inicial. Em seguida, passaremos pelo HomeLoading e HomeSuccess (no caso de sucesso) ou HomeError (no caso de erros).
+
+@@3
+Para saber mais: BLoC ou Cubit? A melhor abordagem para o seu projeto
+
+Durante a aula, exploramos dois termos relevantes: BLoC e Cubit. É importante compreender claramente cada um deles. Vamos lá!
+BLoC, que significa Business Logic Object Components (em português, Componentes de Objetos de Lógica de Negócio), é um padrão amplamente utilizado no Flutter para separar as regras de negócio (que determinam o funcionamento da aplicação) da interface do usuário (aquilo que o usuário vê e com o qual interage).
+
+Já o Cubit é um subconjunto do BLoC que oferece uma abordagem simplificada para o gerenciamento de estados.
+
+O BLoC é mais poderoso e possui uma gama mais ampla de funcionalidades, enquanto o Cubit, como um subconjunto do BLoC, possui menos recursos, porém é mais simples de usar. Portanto, recomenda-se o uso do Cubit para problemas mais simples e, se necessário, migração para o BLoC.
+
+Para entender as diferenças de forma mais técnica, o BLoC possui dois conceitos-chave: eventos e estados. Ao disparar um evento (apertar um botão, um gesto ou condições específicas) o estado da aplicação deve mudar. Por outro lado, no Cubit, lidamos apenas com estados.
+
+Em resumo, ambos podem ser utilizados em projetos, inclusive neste curso. No entanto, o Cubit é mais fácil de implementar, pois não lida com eventos. Pensando que a aprendizagem fica mais fácil começando do conhecimento mais simples, vamos utilizar bastante o Cubit neste curso.
+
+Caso tenha interesse, pode também consultar a documentação para o BLoC/Cubit para mais detalhes.
+
+https://www.alura.com.br/artigos/o-que-sao-regras-de-negocio?_gl=1*1cxtz4m*_ga*MTgwMzIzMjk2Ni4xNjg4ODE5OTcz*_ga_1EPWSW3PCS*MTcwMDYwNDM0My4xMTEuMS4xNzAwNjA3NDM5LjAuMC4w*_fplc*RVBXaVBZZnVheEMxVnBkdVdjUkNrd3VlJTJGSWQ3VlRaUzVKUUtOaGdnRjRiSTB0ZHczS1c4SlRYMTBZcENzT3hmUFFTS1ZWWUU5eUFHNkhBOTBoV2NvR3dZUGElMkJqY2clMkJ0Z2ZGYWlGNW5YV08lMkZBaSUyQiUyRndYQUJIMWtRa3VmSTRRJTNEJTNE
+
+https://pub.dev/packages/bloc
+
+@@04
+Montando a lógica de busca com Cubit
+
+Agora que entendemos os conceitos para fazer a mudança de estado, vamos criar nossa própria função que alterará o estado do HomeCubit para cada um daqueles estágios listados no arquivo home_states.dart.
+Como queremos fazer a busca para a API, o primeiro passo será criar uma função assíncrona Future<>, com o tipo void, pois não temos retorno. Essa função se chamará getMovies():
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+
+  Future<void> getMovies() async {
+
+  }
+
+}COPIAR CÓDIGO
+Após o HomeInitial, temos o HomeLoading, depois o HomeSuccess ou o HomeError, caso haja algum erro. Para alterar de HomeInitial para HomeLoading, usaremos a função emit(), passando o estado HomeLoading:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+
+  Future<void> getMovies() async {
+    emit(HomeLoading());
+  }
+
+}COPIAR CÓDIGO
+Agora, o Cubit sabe que, ao chamar a função GetMovies(), inicialmente alteraremos o estado para HomeLoading. O próximo passo é fazer a busca, ação já definida no arquivo movies_api.dart. Basta criar uma instância de HomeService e chamar a função fetchMoveis(). Através da response, o retorno será a lista de filmes.
+
+Primeiramente, criaremos a instância, chamada homeService:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+  final HomeService homeService = HomeService();
+
+  Future<void> getMovies() async {
+    emit(HomeLoading());
+  }
+
+}COPIAR CÓDIGO
+Dentro da função getMovies(), declararemos uma variável chamada movies, que armazenará o retorno de fetchMovies(). Como estamos lidando com uma função assíncrona, usaremos a palavra await:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+  final HomeService homeService = HomeService();
+
+  Future<void> getMovies() async {
+    emit(HomeLoading());
+    final movies = await homeService.fetchMovies();
+  }
+
+}COPIAR CÓDIGO
+Para lidar com possíveis erros nesse processo de busca na API, vamos construir um bloco try/catch. Dentro do bloco try, tentaremos buscar a lista de filmes e, se tudo der certo, chamaremos o emit() para alterar o estado para HomeSuccess:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+  final HomeService homeService = HomeService();
+
+  Future<void> getMovies() async {
+    emit(HomeLoading());
+    try {
+      final movies = await homeService.fetchMovies();
+      emit(HomeSuccess());
+    } catch(e) {
+
+    }
+  }
+
+}COPIAR CÓDIGO
+No bloco catch, vamos emitir o estado HomeError:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+  final HomeService homeService = HomeService();
+
+  Future<void> getMovies() async {
+    emit(HomeLoading());
+    try {
+      final movies = await homeService.fetchMovies();
+      emit(HomeSuccess());
+    } catch(e) {
+      emit(HomeError());
+    }
+  }
+
+}COPIAR CÓDIGO
+Assim, na função getMovies, já fizemos referências aos quatro possíveis estados da tela Home. Na linha em que declaramos a variável movies, a IDE indicará um ponto de atenção. Essa variável não está sendo usada. O HomeSuccess ainda não está recebendo movies!
+
+Para entender melhorar, vamos voltar ao home_states.dart. As classes definidas nesse arquivo são representações dos estados e elas podem conter informações. A classe HomeSuccess, por exemplo, pode ter uma lista de filmes!
+
+Vamos desenvolver um construtor de HomeSuccess, que receberá this.movies. Em seguida, criaremos uma instância final List<Movie> movies:
+
+// ...
+
+class HomeSuccess extends HomeStates {
+  HomeSuccess(this.movies);
+
+  final List<Movie> movies;
+}
+
+// ...COPIAR CÓDIGO
+Agora, a classe tem uma lista de filmes! Quando estivermos no estado de HomeSuccess, teremos uma lista. Após salvar esse arquivo, vamos voltar ao home_cubit.dart e passar a variável movies para HomeSuccess():
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+  final HomeService homeService = HomeService();
+
+  Future<void> getMovies() async {
+    emit(HomeLoading());
+    try {
+      final movies = await homeService.fetchMovies();
+      emit(HomeSuccess(movies));
+    } catch(e) {
+      emit(HomeError());
+    }
+  }
+
+}COPIAR CÓDIGO
+Quanto ao HomeError, podemos imprimir uma string customizada e amigável para a pessoa usuária:
+
+import 'package:bloc/bloc.dart';
+
+part 'home_states.dart';
+
+class HomeCubit extends Cubit<HomeStates> {
+  HomeCubit() : super(HomeInitial());
+  final HomeService homeService = HomeService();
+
+  Future<void> getMovies() async {
+    emit(HomeLoading());
+    try {
+      final movies = await homeService.fetchMovies();
+      emit(HomeSuccess(movies));
+    } catch(e) {
+      emit(HomeError('Não foi possível carregar a lista de filmes!'));
+    }
+  }
+
+}COPIAR CÓDIGO
+No arquivo home_states.dart, precisaremos indicar que a classe HomeError recebe uma string no construtor:
+
+// ...
+
+class HomeError extends HomeStates {
+  HomeError(this.error);
+
+  final String error;
+}
+
+// ...COPIAR CÓDIGO
+Assim, dentro do objeto HomeSuccess, temos a lsita de filmes. Já dentro da classe HomeError, consta a mensagem de erro. Com todas essas informações prontas, nosso próximo passo será consumiar dentro do Flutter, a parte visual da nossa Home.
+
+@@05
+Faça como eu fiz: busca com Cubit
+
+Hora da prática!
+Nessa aula, aprendemos a criar uma função assíncrona chamada getMovies que vai alterar o estado da tela Home emitindo estados (HomeLoading, HomeSuccess ou HomeError) ao fazer a busca por uma lista de filmes.
+
+Agora é a sua vez de montar a lógica dos arquivos Cubit. Para fazer isso, siga os seguintes passos:
+
+Passo 1: Crie a função que vai devolver para a tela, a lista de filmes (lembrando que ela precisa ser uma função assíncrona);
+Passo 2: Dentro dessa função, altere o estado atual do Cubit de inicial para carregando;
+Passo 3: Agora carregue a lista de filmes da classe HomeService através da função fetchMovies()e salve em uma lista de filmes;
+Passo 4: Se tudo der certo, atualize o estado para sucesso e mande a lista de filmes para a classe HomeSuccess;
+Passo 5: Se nada der certo, atualize o estado para erro e mande uma mensagem de erro para a classe HomeError.
+É muito importante que você faça as adaptações necessárias para receber a lista de filmes e a mensagem de erro nas classes de estados.
+
+Vamos lá?
+
+Conseguiu colocar em prática o que aprendeu em aula?
+Se quiser mais informações, você pode conferir o passo detalhado da implementação abaixo:
+
+1) Criação do método getMovies() na classe HomeCubit:
+
+O método getMovies() é assíncrono e não retorna um valor (Future<void>);
+Dentro do método, ele emite o estado HomeLoading() para indicar que a lista de filmes está sendo carregada;
+Em seguida, chamamos o método fetchMovies() do serviço homeService para buscar os filmes e armazenar o resultado na variável final movies;
+Para validar se a busca for bem-sucedida, vamos utilizar um try catch;
+Se a busca for bem-sucedida, ele emite o estado HomeSuccess com os filmes obtidos;
+Caso ocorra uma exceção, ele emite o estado HomeError com uma mensagem de erro:
+    Future<void> getMovies() async {
+      emit(HomeLoading());
+      try {
+        final movies = await homeService.fetchMovies();
+        emit(HomeSuccess(movies));
+      } catch(e) {
+        emit(HomeError('Não foi possível carregar a lista de filmes!'));
+      }
+    }COPIAR CÓDIGO
+2) Vamos adaptar a classe HomeSuccess:
+
+A classe HomeSuccess agora possui um construtor que recebe uma lista de filmes e armazena-a na propriedade movies:
+    class HomeSuccess extends HomeStates {
+      HomeSuccess(this.movies);
+
+      final List<Movie> movies;
+    }COPIAR CÓDIGO
+3) Por último, a classe HomeError:
+
+A classe HomeError agora possui um construtor que recebe uma mensagem de erro e armazena-a na propriedade error.
+    class HomeError extends HomeStates {
+      HomeError(this.error);
+
+      final String error;
+    }COPIAR CÓDIGO
+Caso queira conferir o resultado dessa aula, você pode acessar o link neste commit.
+
+Bateu uma dúvida ou dificuldade? Chame a gente lá no fórum ou no Discord!
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/commit/e837550128e4e397118d1c39f30190a2f324f51c
+
+@@06
+Consumindo o Cubit na Home
+
+Finalizamos toda a parte lógica do nosso Cubit. O próximo passo será mostrar essas informações na nossa tela. Então, encerramos todo o nosso assunto com o pacote de BLoC, e agora começaremos a usar o pacote Flutter BLoC, que contém as informações para mostrar algo na tela por meio do HomeCubit.
+Finalizamos o home_cubit.dart, então vamos para a nossa Home no arquivo home.dart.
+
+Em algum momento, criaremos uma instância de HomeCubit. Então, dentro da classe _HomeState, na linha 14, criaremos a instância: final HomeCubit homeCubit = HomeCubit(). Em algum momento, usaremos essa instância para pegar as informações dos estados.
+
+home.dart
+class _HomeState extends State<Home> {
+  final HomeCubit homeCubit = HomeCubit();COPIAR CÓDIGO
+Descendo rapidamente o nosso código, vamos tentar entender onde nossa lista está sendo construída. Na linha 38, temos um SliverGrid.builder() que contém um itemBuilder onde está o movieCard(). O movieCard() é o que aparece na nossa tela para cada cartão de filme.
+
+Se prestarmos bem atenção, não queremos realmente desenhar toda a Home, mas redesenhar essa lista. Então, teremos que envolver esse SliverGrid com algum widget do próprio BLoC que dirá "apenas esse trecho de código precisa ser redesenhado, e não toda a aplicação". É para isso que temos o pacote de Flutter BLoC!
+
+O SliverGrid.builder() ficará envolto de outro widget, que adicionamos clicando nele e selecionando "Wrap with widget", chamado BlocBuilder(). No autoimport, ele nos indica o pacote do qual importará esse widget: from 'package:flutter_bloc...'. Reforçando: terminamos a nossa parte lógica e agora estamos trabalhando com a parte visual.
+
+const GenreFilter(),
+BlocBuilder(
+    child:SliverGrid.builder(
+
+// código omitido
+
+      itemBuilder: (context, index) {
+        return MovieCard(movie: Movie(name: "James Bond",classification: Classification.naoRecomendado12, duration: "1h 22min", sinopse: "James Bond é um agente", genre: "Suspense", imageURI: null, sessions: ["18:00"]));
+      },
+      itemCount: 5,
+    ),
+),
+
+//código omitido...COPIAR CÓDIGO
+Ao importar esse widget, surgem alguns erros. O BlocBuilder espera um builder, e nós estamos passando um child para ele. Então, nosso primeiro passo será chamar o builder, que espera uma função anônima que recebe um context e um state.
+
+Quais são os estado que temos disponíveis, sobre os quais precisamos trabalhar na nossa Home? Ao todo, são quatro estados. Não precisamos, necessariamente, lidar com o primeiro porque é o estado inicial da Home; quando criamos a instância, o HomeInitial já é o estado inicial do nosso Cubit.
+
+Dessa forma, precisaremos lidar com o HomeLoading, o HomeSuccess e o HomeError. Então, vamos chamar a função anônima que nos dará um bloco de código para trabalhar:
+
+const GenreFilter(),
+BlocBuilder(
+    builder: (context, state) {
+
+    },
+    child: SliverGrid.builder(
+
+//código omitido...COPIAR CÓDIGO
+O nosso primeiro estágio é o HomeLoading. Podemos criar uma condição para validar: se (if) o state atual for HomeLoading, ele nos retornará algo. Ele pode nos retornar um Center() que receberá como filho (child) um CircularProgressIndicator() para indicar o carregamento das informações:
+
+const GenreFilter(),
+BlocBuilder(
+  builder: (context, state) {
+    if (state == HomeLoading) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+// código omitido...COPIAR CÓDIGO
+Caso contrário (else if), vamos checar o próximo estágio. Se o state atual for HomeSuccess, ele nos retornará o nosso SliverGrid.builder(). Para isso, damos um return, removemos o child do SliverGrid e o movemos inteiro para dentro desse retorno. Depois o indentamos para organizar melhor:
+
+// ... código omitido
+
+    } else if (state == HomeSuccess) {
+      return SliverGrid.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisExtent: 240,
+        ),
+        itemBuilder: (context, index) {
+          return MovieCard(
+            movie: Movie(
+              name: "James Bond",
+              classification: Classification.naoRecomendado12,
+              duration: "1h 22min",
+              sinopse: "James Bond é um agente",
+              genre: "Suspense",
+              imageURI: null,
+              sessions: ["18:00"]));
+        },
+        itemCount: 5,
+      );
+    }COPIAR CÓDIGO
+Retornaremos oSliverGrid.builder, ótimo! O que tem dentro dele? Lembrando que, se o estado for HomeSuccess, ele terá alguma informação dentro. Podemos acessar a informação através do state, chamando o objeto que existe dentro dele. Ou seja, se o estado for HomeSuccess, ele deve construir a lista de filmes; não deveria parar de funcionar, por exemplo.
+
+Por último, inserimos outro else para verificar se o estado é igual a HomeError. Não precisamos do if porque, caso não seja nenhum dos outros estados, ele cairá automaticamente no HomeError. Retornaremos uma mensagem de erro com um Center(child:) contendo um Text(), cujo valor será 'Deu erro', por enquanto:
+
+// ... código omitido
+
+    } else {
+      return Center(child: Text('Deu erro'),);
+    }COPIAR CÓDIGO
+Agora, temos um retorno para todos os estados possíveis. Vamos salvar o código.
+
+Ao salvar, recebemos um erro: ProvideNotFoundException(). Isso aconteceu porque o nosso BlocBuilder() não está especificado, ou seja, não dissemos qual bloc ele deve usar, o estado com que ele terá de lidar, não passamos quase nenhuma informação.
+
+Por mais que tenha o BlocBuilder(), de onde estamos buscando esse state? E se tivermos mais de um Cubit dentro da Home? Precisamos dizer para o BlocBuilder() com o que ele está trabalhando.
+
+Então, nós iremos tipar esse BlocBuilder() assim que o chamamos, na linha 39, com as duas informações com as quais irá trabalhar. A primeira informação é a HomeCubit, para dizer com que Cubit ele vai lidar, e HomeStates, para dizer com quais estados ele vai lidar: BlocBuilder<HomeCubit, HomeStates>.
+
+Mas, só isso não resolve totalmente o nosso problema. É importante passar outra informação também, por meio da propriedade bloc. Ela recebe a referência de algum bloc ou Cubit. Nós já criamos uma instância dele lá no começo do nosso arquivo: homeCubit.
+
+const GenreFilter(),
+BlocBuilder<HomeCubit, HomeStates>(
+  bloc: homeCubit,
+  builder: (context, state) {
+    if (state == HomeLoading) {
+
+// código omitido...COPIAR CÓDIGO
+Vamos salvar o arquivo novamente e recarregar a aplicação.
+
+Agora, recebemos outro erro: FluterError.fromParts<DiagnosticsNode>. Isso aconteceu porque passamos um tipo errado de render.
+
+Estamos trabalhando com um CustomScrollView(), que não recebe diretamente o widget Center() que colocamos no retorno de HomeLoading. Precisamos abraçá-lo com um widget chamado SliverFillRemaining()
+
+Não precisamos fazer isso com o Grid, porque já é um SliverGrid. Por fim, faremos o mesmo com o Center() do retorno do último else:
+
+// ... código omitido
+    if (state == HomeLoading) {
+      return const SliverFillRemaining(
+        child: Center(child: CircularProgressIndicator()),
+      );
+    } else if (state == HomeSuccess) {
+      return SliverGrid.builder(
+// código omitido...
+    } else {
+      return SliverFillRemaining(child: Center(child: Text('Deu erro'),));
+// código omitido...COPIAR CÓDIGO
+Pronto! Salvamos novamente e recarregamos a aplicação.
+
+Ao fazer isso, a tela da aplicação no emulador exibe a mensagem "Deu erro". É o que queríamos, de fato: ver o estado acontecendo.
+
+O erro aconteceu porque ainda não chamamos a nossa função que recarrega e muda os estados. Então, o único estado que ele tem disponível é o HomeInitial. No entanto, o HomeInitial não consegue bater em nenhum desses estados. Sendo assim, o retorno do último else é o que ele consegue exibir, porque é a exceção.
+
+Nosso próximo passo, então, será chamar a função que muda os estados e, depois, lidar com as informações que estamos recebendo dentro da nossa API.
+
+Nos encontramos no próximo vídeo!
+
+@@07
+Para saber mais: StatefulWidget ou StatelessWidget?
+
+As classes StatelessWidget e StatefulWidget são dois tipos fundamentais de widgets no Flutter. Um StatelessWidget, como o nome sugere, é um widget que não muda - é imutável. Isso significa que, uma vez definido, sua interface de usuário permanece a mesma ao longo do tempo.
+Por outro lado, um StatefulWidget é um widget que pode mudar - é mutável. Ele possui um estado interno que pode ser alterado durante a execução do aplicativo.
+
+Você pode se perguntar: "Eu poderia ter usado o StatefulWidget em vez do Cubit neste aplicativo?"
+
+A resposta é sim. O StatefulWidget tem uma função chamada setState que é usada para informar ao Flutter que o estado interno do widget mudou e que a interface do usuário precisa ser atualizada.
+
+No entanto, utilizar um StatefulWidget não é a mesma coisa que utilizar um gerenciador de estado, como o Cubit. Com um StatefulWidget, quando setState é chamado, toda a interface do usuário do widget é reconstruída. Já com o Cubit, apenas os widgets que precisam ser atualizados são reconstruídos, o que pode melhorar a performance do aplicativo.
+
+Na nossa Home, apontamos para o Flutter quais widgets precisam ser redesenhados através do widget BlocBuilder. Esse BlocBuilder funciona como um StatefulWidget interno, ou seja, utilizando o BlocBuilder, não precisamos chamar a função setState(). Como não precisamos chamar o setState(), a Home não precisa ser necessariamente um StatefulWidget.
+
+Por fim, você pode ter notado que criamos a nossa Home como um StatefulWidget. No entanto, isso não é estritamente necessário. Na verdade, você poderia substituí-lo por um StatelessWidget sem problemas!
+
+@@08
+Utilização do Cubit
+
+Você está desenvolvendo um aplicativo de lista de tarefas. Ao adicionar uma nova tarefa, você precisa atualizar o estado do Cubit para refletir a adição da tarefa e, consequentemente, exibir a nova tarefa na tela.
+Considerando o uso de Cubit em uma aplicação Flutter, selecione a alternativa que traz qual é a forma correta de atualizar o estado do Cubit ao adicionar uma nova tarefa e refletir as mudanças na tela?
+
+Atribuir diretamente o novo estado à propriedade state do Cubit e atualizar a tela usando setState().
+ 
+Alternativa correta
+Chamar emit() no Cubit com o novo estado e envolver o widget que deverá ser atualizado com o BlocBuilder.
+ 
+Para atualizar o estado do Cubit e refletir as mudanças na tela, é necessário chamar o método emit() no Cubit, passando o novo estado como parâmetro. Além disso, é preciso dizer qual trecho de código precisa ser atualizado, utilizando o widget BlocBuilder.
+Alternativa correta
+Criar uma nova instância do Cubit com o novo estado e atualizar a tela usando setState().
+ 
+Alternativa correta
+Chamar emit() no Cubit com o novo estado e deixar o Cubit automaticamente atualizar a tela.
+
+@@09
+Mostrando a lista de filmes na Home
+
+Nossa aplicação carrega automaticamente na tela de "Deu erro" porque o único estado que ela tem dentro dela é o Initial, e não temos nada nesse estado. portanto, caímos diretamente no nosso else final, da linha 65, retornando essa mensagem de erro.
+Isso acontece porque falta chamar a nossa função getMovies() dentro do Cubit, a função que realmente alterará os estados da nossa Home. Mas, em que momento queremos alterar os estados? Em que momento queremos carregar a nossa lista de filmes?
+
+Queremos que a pessoa abra o aplicativo e essa lista de filmes já seja carregada. Para isso, podemos chamar a nossa função no estado mais inicial do nosso widget de _HomeState: dentro da função initState().
+
+Ou seja, ao começar a desenhar o widget, ele também começará a alterar os estados dentro desse _HomeState. Então, escrevemos: homeCubit.getMovies(). Teremos:
+
+home.dart
+@override
+void initState() {
+  homeCubit.getMovies();
+  super.initState();
+}COPIAR CÓDIGO
+Vamos salvar o arquivo e verificar o resultado que aparece na tela da aplicação no simulador. Continuamos na mensagem "Deu erro". Vamos tentar debugar o que está acontecendo.
+
+Daremos um print() logo no início do nosso builder para imprimir o estado (state) em que estamos:
+
+const GenreFilter(),
+  BlocBuilder<HomeCubit, HomeStates>(
+    bloc: homeCubit,
+    builder: (context, state) {
+            print(state);
+// código omitidoCOPIAR CÓDIGO
+Vamos salvar o arquivo e verificar o Debug Console. Ele nos retorna que estamos em uma instância de HomeSuccess:
+
+Instance of 'HomeSuccess'
+Ou seja, o state está em HomeSuccess. Se carregarmos novamente, veremos que primeiro estamos numa instância de HomeLoading e depois HomeSuccess:
+
+Instance of 'HomeLoading'
+Instance of 'HomeSuccess'
+Então, por que a tela ainda exibe a mensagem de erro?
+
+Encontramos esse problema porque, por mais que ela realmente esteja identificando o estado de HomeLoading e HomeSuccess, o nosso comparador está errado. Estamos usando state == HomeLoading, por exemplo, mas isso não funciona porque o primeiro valor é uma instância e o segundo é outra representação.
+
+O ideal, então, seria usar o is no lugar de ==. Vamos trocar todas as ocorrências:
+
+// ... código omitido
+    if (state is HomeLoading) {
+// código omitido...
+    } else if (state is HomeSuccess) {
+// código omitido...COPIAR CÓDIGO
+Podemos apagar nosso print(), salvar o arquivo e recarregar a aplicação. Agora, ele está carregando novamente a nossa lista de filmes! Essa não é a nossa lista real de filmes, mas, pelo menos, isso quer dizer que caímos no HomeSuccess.
+
+Agora, vamos alterar o retorno do MovieCard(). Nós temos apenas um filme, e queremos que o retorno de movie seja a nossa lista de filmes na posição da iteração que estiver acontecendo dentro do SliverGrid.builder.
+
+Então, substituiremos todo o objeto Movie() que criamos à mão, com os dados do filme "James Bond", pela lista advinda do nosso estado de HomeSuccess. Para isso, pegaremos um state.movies[] na posição do index, resultando em: state.movies[index]. Com isso, podemos fechar nosso movieCard():
+
+Agora, precisamos apenas ajustar o itemCountque está como 5, um número fixo, e na verdade precisamos pegar o state.movies.length():
+
+itemBuilder: (context, index) {
+    return MovieCard(
+        movie: state.movies[index]);
+},
+itemCount: state.movies.length,
+),COPIAR CÓDIGO
+Podemos salvar o arquivo. Agora, recarregando a aplicação, ele pega toda a nossa lista de filmes:
+
+emulador do Android exibindo a tela "Filmes", numa grade de três linhas por duas colunas, são exibidos os seguintes filmes com suas respectivas capas e títulos: Inception, Forrest Gump, Pulp Fiction, The Godfather, Fight Club, The Shawshank Redemption.
+
+Se continuarmos rolando a tela para baixo, continuam a aparecer outros filmes!
+
+Bacana. Vamos reiniciar toda a aplicação para tentar pegar o CircularProgressIndicator() da tela de carregamento e verificar se ele funciona. Ele aparece bem brevemente, porque o carregamento da API é rápido.
+
+Por fim, só precisamos tratar o nosso erro. Ele deve receber a nossa mensagem customizada. Então, não será o child: Center(child: Text('Deu erro),), mas um texto que receberemos do próprio estado. Também queremos deixar uma mensagem um pouco mais agradável para a pessoa usuária.
+
+Então, ao invés de retornar um Center(), retornaremos um Column(). Esse Column() precisa de um mainAxisAlignment, que será um MainAxisAlignment.center. Ele também terá children, que será uma lista de tipo <Widget>[]:
+
+} else {
+  return SliverFillRemaining(child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+
+      ],
+    ));
+}COPIAR CÓDIGO
+Dentro dessa lista, nós temos duas informações. A primeira é um ícone bonito, que será um const Icon() recebendo o ícone que usaremos, o Icons.not_interested. Vamos passar um tamanho de 30 px (size: 30.0) para esse ícone também.
+
+Em seguida, temos um espaçamento entre os elementos. Para isso, podemos usar um const SizedBox(). Sua altura será de 16 px (height: 16.00).
+
+Por último, temos nosso texto (Text()). O texto será, justamente o nosso state.error. Esse error vai ser indicado como um erro, porque não sabe qual será o estado que vai existir.
+
+Para corrigir isso, vamos retornar ao else e escrever else if() novamente, passando state is HomeError:
+
+} else if (state is HomeError) {
+  return SliverFillRemaining(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        const Icon(Icons.not_interested, size: 30.0),
+        const SizedBox(height: 16.0),
+        Text(state.error),
+      ],
+    ));
+}COPIAR CÓDIGO
+Continuaremos com um erro, porque o builder precisa retornar algo. Então, no retorno final deste último if (), vamos retornar um SliverToBoxAdapter() vazio mesmo, só para dizer para ele retornar algo. Então, passamos child: Container():
+
+return SliverToBoxAdapter(child: Container(),);
+},COPIAR CÓDIGO
+Pronto! Não temos mais nenhum erro ou aviso. Vamos salvar o arquivo. Mas, como testar o estado de erro?
+
+Como brincadeira, podemos acessar o arquivo movies_api.dart e inserir um erro de digitação na nossa URL, por exemplo, tirando um "t" do "https":
+
+movies_api.dart
+class HomeService {
+  Future<List<Movie>> fetchMovies() async {
+    final response = await http.get(Uri.parse(
+            'htps://raw.githubusercontent.com/ikyrie/projeto_panucci_movies/main/lib/movies.json'));COPIAR CÓDIGO
+Vamos salvar o arquivo e recarregar a aplicação. Ao fazer isso, é exibida a mensagem "Não foi possível carregar a lista de filmes!" com um ícone de bloqueio na tela:
+
+emulador do Android exibindo a tela "Filmes". no centro, um ícone de bloqueio e a frase de erro.
+
+O erro está carregando perfeitamente e recebendo a mensagem que vem do nosso estado de HomeError.
+
+Vamos voltar para a nossa API em movies_api.dart e corrigir a URL que quebramos. Salvamos o arquivo e recarregamos a aplicação. Com isso, o CircularProgressIndicator() aparece brevemente enquanto a API é carregada e, por fim, a lista de filmes volta a ser exibida na tela.
+
+Perfeito! Nossa primeira feature foi implementada com sucesso.
+
+O próximo passo será implementar a feature de filtro, a qual atualizará essa lista de filmes a partir do gênero selecionado.
+
+Nos encontramos lá!
+
+@@10
+Faça como eu fiz: implementação da lista de filmes
+
+Hora da prática!
+Em aula, abordamos como utilizar a lógica do Cubit na tela Home, focando nos estados e na lógica de carregamento da lista de filmes.
+
+Agora é a sua vez de implementar essa feature. Siga os seguintes passos:
+
+Passo 1: Crie uma instância de HomeCubit dentro da Home;
+Passo 2: Chame a função de getMovies, dentro do initState para buscar a lista de filmes assim que a tela for iniciada;
+Passo 3: Agora, usando o BlocBuilder, defina o BLoC que está usando e o tipo de estado que espera;
+Passo 4: Dentro do BlocBuilder, verifique o estado do Cubit:
+Se for HomeLoading: exiba uma tela de carregamento;
+Se for HomeSuccess: exiba a lista de filmes;
+Se for HomeError: exiba uma mensagem para o usuário informando que houve um erro;
+Caso não seja nenhum desses estados, pode retornar apenas uma tela em branco.
+Vamos lá?
+
+Caso queira conferir o resultado dessa aula, ele está dividido em dois commits, que você pode acessar nos seguintes links: Consumindo o Cubit na Home e Mostrando a lista de filmes na Home.
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/commit/a5397c93723e59737372c9be6ef1a49726d25bb5
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/commit/0a515e0a8e6ece07822c90c919704e096321c94b
+
+@@11
+Desafio: implementando o Cubit no contador do Flutter
+
+Chegou o momento colocar em prática o que aprendeu até agora e, assim, vou propor a você um desafio. E aí, topa?
+Quando você estava começando a aprender Flutter, muito provavelmente criou o famoso contador (projeto que vem por padrão quando criamos uma aplicação), é o nosso "Hello, World!" no Flutter, certo?
+
+Como sabemos, o contador utiliza StatefulWidget e o setStatepara avisar ao Flutter que a pessoa usuária apertou o FloatingActionButton e que deve atualizar a interface da aplicação.
+
+Com base nisso, meu desafio para você é o seguinte:
+
+Que tal viajar para o passado e usar seus novos conhecimentos em gerenciamento de estados para recriar a mesma aplicação, mas usando Cubit no lugar de StatefulWidget?
+
+Vou te deixar algumas dicas:
+
+Crie o Cubit para o contador;
+Crie a instância desse Cubit na sua página de contador;
+Chame a instância do Cubit para:
+a) Notificar que ocorreu uma mudança de estado;
+b) Atualizar o valor do contador na tela.
+Por fim, a maior dica e conselho que posso dar:
+a) Estude a documentação para entender melhor e aperfeiçoar seus conhecimentos.
+Ao final, você deverá ter uma aplicação parecida com esta:
+
+GIF colorido. Aplicação mobile desenvolvida em Flutter. Fundo branco. Na parte superior, existe uma barra de notificações do celular, e logo a abaixo um título na cor preta centralizado com o seguinte texto: “Contador com Cubit”. No centro da tela, existe um texto com a seguinte frase “Aperte o botão para adicionar +1”, e abaixo dele um valor numérico sendo incrementado constantemente, ambos na cor preta também. No canto inferior da aplicação, um botão quadrado, azul, com bordas arredondadas e um sinal de “+” no meio, ele está sendo pressionado constantemente para alterar o valor numérico do centro da tela.
+
+Lembrando que a interface não precisa ser parecida ou igual! Apenas o funcionamento do contador. Ah, e compartilhe na nossa comunidade o resultado do seu desafio. Vamos adorar ver como ficou.
+
+https://pub.dev/packages/flutter_bloc
+
+
+E aí, conseguiu resolver o desafio? Espero que sim!
+E como também gosto de desafios, vou deixar aqui o passo a passo de como fiz:
+
+Instalei as bibliotecas bloc e flutter_bloc;
+Criei um arquivo chamado counter_cubit.dart;
+Em counter_cubit.dart criei uma classe CounterCubit que vai estender de Cubit e vai lidar com estados do tipo inteiro (int).
+Não se esqueça de importar a biblioteca bloc/bloc.dart;
+Além disso, a classe CounterCubit deve começar com valor 0 e ter uma função que faz o emit (atualiza) do estado, incrementando +1 ao estado atual:
+    import 'package:bloc/bloc.dart';
+    
+    class CounterCubit extends Cubit<int> {
+      CounterCubit() : super(0);
+    
+      void increment() => emit(state + 1);
+    }
+COPIAR CÓDIGO
+Agora na tela do aplicativo, no arquivo main.dart, criei uma instância de CounterCubit:
+    final counterCubit = CounterCubit();
+COPIAR CÓDIGO
+E para atualizar o valor do Text, criei o BlocBuilder, especificando o BLoC que queria utilizar (e não esqueça de importar a biblioteca flutter_bloc/flutter_bloc.dart):
+    BlocBuilder<CounterCubit, int>(
+        bloc: counterCubit,
+        builder: (context, state) {
+          return Text(
+            state.toString(),
+            style: Theme.of(context).textTheme.headlineMedium,
+          );
+        },
+      ),
+COPIAR CÓDIGO
+Por fim, dentro do onPressed de floatingActionButton, chamei a função de incremento que criei usando a instância de CounterCubit:
+    counterCubit.increment();
+COPIAR CÓDIGO
+Dessa maneira, consegui fazer o contador funcionar perfeitamente!
+
+Se quiser conferir os arquivos da aplicação completos, vou deixá-los logo abaixo:
+
+Arquivo main.dart:
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'counter_cubit.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Contador',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: const Color(0xFF041833),
+      ),
+      home: CounterPage(),
+    );
+  }
+}
+
+class CounterPage extends StatelessWidget {
+  CounterPage({super.key});
+
+  final counterCubit = CounterCubit();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text('Contador com Cubit'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text(
+              'Aperte o botão para adicionar +1',
+            ),
+            BlocBuilder<CounterCubit, int>(
+              bloc: counterCubit,
+              builder: (context, state) {
+                return Text(
+                  state.toString(),
+                  style: Theme.of(context).textTheme.headlineMedium,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          counterCubit.increment();
+        },
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+COPIAR CÓDIGO
+Arquivo counter_cubit.dart:
+import 'package:bloc/bloc.dart';
+
+class CounterCubit extends Cubit<int> {
+  CounterCubit() : super(0);
+
+  void increment() => emit(state + 1);
+}
+COPIAR CÓDIGO
+Caso tenha ficado dúvidas na solução do desafio, procure nossa comunidade do Discord ou o fórum do curso.
+
+@@12
+O que aprendemos?
+
+Nessa aula, você aprendeu como:
+Identificar as diferenças entre BLoC e Cubit;
+Implementar a lógica de gerenciamento de estados com um Cubit, utilizando o emit para atualizar estados;
+Consumir o Cubit na tela Home, utilizando o BlocBuilder para reconstruir o estado da interface;
+Mostrar os dados atualizados pelo Cubit na tela da aplicação.
+Continuamos o nosso projeto na próxima aula. Encontro você lá!
+
