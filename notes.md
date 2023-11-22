@@ -1235,3 +1235,352 @@ Consumir o Cubit na tela Home, utilizando o BlocBuilder para reconstruir o estad
 Mostrar os dados atualizados pelo Cubit na tela da aplicação.
 Continuamos o nosso projeto na próxima aula. Encontro você lá!
 
+#### 22/11/2023
+
+@03-Filtro com Cubit
+
+@@01
+Projeto da aula anterior
+
+Você pode revisar o seu código e acompanhar o passo a passo do desenvolvimento do nosso projeto e, se preferir, pode baixar o projeto da aula anterior.
+Bons estudos!
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/archive/refs/heads/Aula2.zip
+
+@@02
+Desafio: montando o filtro
+
+Implementamos a future que carrega a lista de filmes e mostra na home assim que a página é carregada. Agora, vamos implementar a future de filtro de gêneros de filmes.
+Essa future é semelhante à que fizemos no Cubit. A diferença é que, ao invés de chamar a função fetchMovies(), chamaremos fetchMoviesByGenre() passando um gênero de filme para ela.
+
+No topo da aplicação, temos um menu drop-down com vários gêneros de filmes. A ideia é que, ao clicar em um gênero específico, sejam carregados somente os filmes correspondentes ao gênero selecionado. Ao clicar em "Todos", todos os filmes disponíveis devem ser carregados. Se não houver filmes para determinado gênero, que é o caso de "Ação", a pessoa usuária deve receber um feedback informando que não há filmes com este gênero.
+
+É sua vez de solucionar este desafio e implementar esta future!
+
+Deixaremos uma atividade para te orientar no passo a passo a ser seguido. Em vídeos seguintes, veremos como o instrutor fez a implementação desta future, mas não há somente uma solução, então é possível que você implemente de maneira diferente. O importante, portanto, é que seja funcional!
+
+@@03
+Desafio: montando o filtro
+
+Neste desafio, você vai precisará implementar uma nova feature em nosso projeto: a busca por filmes baseada no gênero. Vamos entender exatamente o que se espera dessa nova função:
+Criação de uma nova função no HomeCubit, que gerencie o filtro por gênero;
+Chamada da função na tela de Home, sempre que o gênero escolhido for alterado;
+Atualização da lista de filmes na interface da aplicação;
+Para que você consiga visualizar o resultado esperado, vou deixar um GIF do que o desafio propõe:
+
+GIF colorido. Aplicação mobile sobre filmes, fundo na cor branca e fontes na cor preta. Apresenta um título na parte superior com nome “Filmes”, logo abaixo tem um nome “Gênero” e ao lado uma caixa de seleção com as opções “Todos”, “Drama”, “Ação”, “Comédia”, “Documentário”, “Romance”, “Suspense”, “Terror” e “Ficção científica”. Ao selecionar cada uma dessas categorias a lista de filmes da tela recarrega e mostra os filmes relacionados, ou, caso não tenha, mostra uma mensagem no centro da aplicação com o texto “Não existem filmes com este gênero!”.
+
+Ah, e não se esqueça de alguns pontos importantes ao resolver o desafio, como:
+
+Você deve usar a mesma instância que já criamos e utilizamos na Home;
+Caso a categoria escolhida seja “Todos”, então deve retornar a lista completa de filmes (assim como já fazemos);
+Se, ao selecionar determinada categoria, não houver nenhum filme na lista, então mostre uma mensagem para o usuário, como “Não existem filmes na categoria escolhida!”.
+
+Teste seus conhecimentos e não desista do desafio. A prática é muito importante no seu processo de aprendizagem.
+Bom desafio e bons estudos!
+
+@@04
+Solução: lógica e consumo
+
+Agora que você fez a future de filtro por gênero, veremos como o instrutor realizou esta implementação para fins de comparação.
+Dentro de "home_cubit.dart" temos a função getMovies() e criaremos uma nova para buscar apenas por gêneros.
+
+Future<void> getMovies() async {
+    emit(HomeLoading());
+    try {
+      final movies = await homeService.fetchMovies();
+      emit(HomeSuccess(movies));
+    } catch(e) {
+      emit(HomeError('Não foi possível carregar a lista de filmes!'));
+    }
+  }COPIAR CÓDIGO
+Por volta da linha 21, criaremos uma função Future que não deve retornar nada, portanto, colocaremos <void>. A chamaremos de getMoviesByGenre() e ela será assíncrona (async). Além disso, receberá String genre.
+
+Future<void> getMoviesByGenre(String genre) async{
+
+}COPIAR CÓDIGO
+O primeiro passo para poder é carregar é dizer que o estado atual é de carregamento. Sendo assim, usaremos a função emit() e chamaremos HomeLoading():.
+
+Future<void> getMoviesByGenre(String genre) async {
+    emit(HomeLoading());
+}COPIAR CÓDIGO
+Em seguida, temos try {} catch, que fará a busca da API e salvará em uma lista. Portanto, dentro de try{} chamamos final movies = await, pois queremos esperar o resultado da busca da API dentro de homeService. homeService, por sua vez, tem a função fetchMoviesByGenre(), que pede um gênero e passamos o que recebemos no construtor.
+
+Future<void> getMoviesByGenre(String genre) async {
+    emit(HomeLoading());
+    try {
+        final movies = await homeService.fetchMoviesByGenre(genre);
+    }
+}COPIAR CÓDIGO
+O próximo passo é dizer ao Cubit que o carregamento foi um sucesso. Então chamamos a função emit() com HomeSuccess() passando a lista de filmes que será utilizada para preencher as informações na tela.
+
+Future<void> getMoviesByGenre(String genre) async {
+    emit(HomeLoading());
+    try {
+        final movies = await homeService.fetchMoviesByGenre(genre);
+        emit(HomeSuccess(movies));
+    }
+}COPIAR CÓDIGO
+Pensando no estado de erro, usamos o cath(e) passando uma mensagem de erro, emitindo o estado de erro com a seguite mensagem: "Não foi possível carregar os filmes deste gênero!"
+
+Future<void> getMoviesByGenre(String genre) async {
+    emit(HomeLoading());
+    try {
+        final movies = await homeService.fetchMoviesByGenre(genre);
+        emit(HomeSuccess(movies));
+    } catch(e) {
+        emit(HomeError('Não foi possível carregar os filmes deste gênero!'));
+    }
+}COPIAR CÓDIGO
+Com isso, completamos nossa função getMoviesByGenre(). Mas onde a chamaremos?
+
+Se olharmos nossa home (arquivo "home.dart"), vemos que criamos a instância de HomeCubit no início da aplicação:
+
+final HomeCubit homeCubit = HomeCubit();COPIAR CÓDIGO
+Além disso, chamamos a função homeCubit.getMovies() no momento que a tela é desenhada, dentro de initState():
+
+@override
+  void initState() {
+    homeCubit.getMovies();
+    super.initState();
+  }COPIAR CÓDIGO
+Ou seja, assim que a tela é carregada, a função é executada e os filmes carregados. Mas não queremos que esta função seja chamada ao mesmo tempo que a outra, mas sim depois que trocarmos a seleção do menu drop-down de "Todos" para algum gênero de filme.
+
+Como nosso projeto está separado por componentes, podemos buscar o que é utilizado somente nesta página, que é o drop-down.
+
+Checando o projeto, temos as pastas "components" e "home". Dentro de "home", temos o componente "genre_filter.dart", onde se faz o filtro por gênero. No momento que trocarmos o valor da propriedade onChanged, na linha 40, homeCubit.getMoviesByGenre() deve ser executada, passando o valor do drop-down para a função.
+
+Não temos acesso à instância de homeCubit, mas isso não gera um problema porque podemos passar para o construtor.
+
+No topo de "genre_filter.dart", vamos incluir required this.homeCubit após key. Assim, estamos informando que precisamos de uma instância de homeCubit.
+
+class GenreFilter extends StatefulWidget {
+    const GenreFilter({Key? key, required this.homeCubit}) : super(key: key);COPIAR CÓDIGO
+Na linha seguinte, criaremos essa instância com final HomeCubit homeCubit:
+
+class GenreFilter extends StatefulWidget {
+    const GenreFilter({Key? key, required this.homeCubit}) : super(key: key);
+    final HomeCubit homeCubit;COPIAR CÓDIGO
+Perceba que HomeCubit apresenta erro, pois é necessário importá-lo no início do código com o seguinte comando:
+
+import '../../logic/cubit/home_cubit.dart';COPIAR CÓDIGO
+Vamos salvar o arquivo.
+
+"home.dart" ainda não está recebendo homeCubit, então vamos passá-lo dentro do construtor, na linha 39:
+
+const GenreFilter(homeCubit: homeCubit,),COPIAR CÓDIGO
+Ao fazê-lo, encontramos um problema, pois passamos uma variável para dentro de uma constante. Para resolver isso basta excluirmos a declaração de constante const:
+
+GenreFilter(homeCubit: homeCubit,),COPIAR CÓDIGO
+Vamos salvar o arquivo.
+
+Em "genre_filter.dart", temos acesso ao homeCubit e às suas funções. Dentro da propriedade onChanged, na linha 43, precisamos fazer uma validação para que, quando não estiver nulo, seja executada a função HomeState.
+
+Porém, temos vários gêneros na aplicação, além da opção "Todos", que não se trata especificamente de um gênero. No caso de "Todos", temos que fazer uma validação, após a linha 44.
+
+Basicamente, se o valor for igual a "Todos", deve pegar widget.homeCubit e chamar a função .getMovies(). Caso contrário, chamamos widget.homeCubit.getMoviesByGenre(), passando o próprio valor, que será o gênero.
+
+onChanged: (String? value) {
+    if (value != null) {
+        value == "Todos" ?
+        widget.homeCubit.getMovies() :
+        widget.homeCubit.getMoviesByGenre(value);
+        setState(() {
+            dropdownValue = value;
+        });COPIAR CÓDIGO
+Vamos salvar o arquivo e recarregar a aplicação. Feito isso, vamos testar o menu drop-down selecionando a opção "Drama". Ao fazê-lo, apenas os filmes deste gênero são listados. Ao clicar em "Todos", voltamos à lista inicial com todos os filmes listados, independente do gênero.
+
+A seguir, continuaremos com a implementação da nossa future de filtrar os filmes por gênero!
+
+@@05
+Solução: melhorias de usabilidade
+
+A future de filtrar filmes por gênero já está funcionando. Porém, ao escolher o gênero de ação, nada aparece. Então precisamos implementar um feedback para que a pessoa usuária saiba que não há filmes deste gênero.
+Se voltarmos para "home_cubit.dart", vemos que implementamos a mensagem "Não foi possível carregar os filmes deste gênero!". Mas ela só deve aparecer em caso de erro durante o processo de comunicação com a API.
+
+Neste caso, precisamos implementar uma mensagem indicando que não há filmes para determinado gênero. No caso, ação.
+
+Em "home.dart", faremos uma validação após state is HomeSuccess, na linha 45. Para isso, incluíremos uma condicional caso a lista esteja vazia:
+
+if(state.movies.isEmpty) {
+
+}COPIAR CÓDIGO
+Na linha 63, temos uma mensagem de erro com estilização e ícone, então podemos copiar para dentro da condicional e aproveitá-la. Ao invés de colocarmos cada item como uma constante, optaremos por colocar apenas a lista de <Widget> como constante.
+
+if(state.movies.isEmpty) {
+    return SliverFillRemaining(child: Column(
+        children: const <Widget>[
+            Icon(Icons.not_interested, size: 30.0,),
+            SizedBox(height: 16.0,),
+            Text("Não existem filmes com este gênero!"),
+            ],
+        ),);
+}COPIAR CÓDIGO
+Em seguida, criaremos um else {} e passamos todo o retorno SilverGrid.builder() para dentro dele:
+
+if(state.movies.isEmpty) {
+    return SliverFillRemaining(child: Column(
+        children: const <Widget>[
+            Icon(Icons.not_interested, size: 30.0,),
+            SizedBox(height: 16.0,),
+            Text("Não existem filmes com este gênero!"),
+            ],
+        ),);
+} else {
+    return SliverGrid.builder(
+        gridDelegate:
+            const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisExtent: 240,
+    ),
+    itemBuilder: (context, index) {
+        return MovieCard(
+            movie: state.movies[index]);
+    },
+    itemCount: state.movies.length,
+    );
+}COPIAR CÓDIGO
+Por fim, acrescentamos mainAxisAlignment: MainAxisAlignment.center dentro de Column() para centralizar:
+
+if(state.movies.isEmpty) {
+    return SliverFillRemaining(child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const <Widget>[
+            Icon(Icons.not_interested, size: 30.0,),
+            SizedBox(height: 16.0,),
+            Text("Não existem filmes com este gênero!"),
+            ],
+        ),);
+} else {
+    return SliverGrid.builder(
+        gridDelegate:
+            const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisExtent: 240,
+    ),
+    itemBuilder: (context, index) {
+        return MovieCard(
+            movie: state.movies[index]);
+    },
+    itemCount: state.movies.length,
+    );
+}COPIAR CÓDIGO
+Ao salvar o arquivo e filtrar por "Ação", a tela nos retorna a mensagem "Não existem filmes com este gênero!". Clicando em "Comédia", porém, o filtro permanece funcionando e nos são mostrados os filmes deste gênero.
+
+Dessa forma, a experiência da pessoa usuária fica mais interessante, pois ela recebe um feedback. Com isso, finalizamos a future de filtro por gênero.
+
+A seguir, vamos implementar o tema baseado no gênero!
+
+@@06
+Faça como eu fiz: resolvendo o desafio
+
+E aí, conseguiu resolver o desafio? Espero que sim!
+Vou te mostrar a forma como fiz para chegar numa solução:
+
+1 - No arquivo home_cubit.dart, adicionei uma nova função que chamo de getMoviesByGenre, que deve:
+
+Ser do tipo Future e assíncrona, pois vai esperar dados da API, porém sem retorno, pois nela vamos apenas gerenciar os estados;
+Receber como argumento uma String com o gênero especificado;
+E, dentro do seu escopo, deve agir de maneira bastante semelhante ao que fizemos em getMovies: indicar que está carregando dados (ao emitir HomeLoading), e em seguida fazer um try/catch com HomeSuccess e HomeError, para o caso de sucesso ou falha na busca pela lista de filmes.
+Veja abaixo como a função fica:
+
+    Future<void> getMoviesByGenre(String genre) async {
+      emit(HomeLoading());
+      try {
+        final movies = await homeService.fetchMoviesByGenre(genre);
+        emit(HomeSuccess(movies));
+      } catch(e) {
+        emit(HomeError('Não foi possível carregar os filmes deste gênero!'));
+      }
+    }
+COPIAR CÓDIGO
+Agora, vamos usar a nova função na nossa tela Home!
+
+2- No arquivo genre_filter.dart, acrescentei as seguintes instruções:
+
+No construtor da classe de GenreFilter, adicionei como parâmetro nomeado e obrigatório o HomeCubit:
+        class GenreFilter extends StatefulWidget {
+          const GenreFilter({Key? key, required this.homeCubit}) : super(key: key);
+          final HomeCubit homeCubit;
+            //...
+        }
+COPIAR CÓDIGO
+A classe GenreFilter possui um widget de DropdownButton, e dentro dele temos o método onChanged, onde podemos especificar o que deve acontecer quando selecionarmos uma categoria diferente na aplicação. É nesse ponto que devemos usar a nossa instância de HomeCubit, chamando a função getMoviesByGenre e passando como parâmetro o valor atual do gênero:
+        onChanged: (String? value) {
+            if (value != null) {
+              widget.homeCubit.getMoviesByGenre(value);
+                //...
+        }
+COPIAR CÓDIGO
+Atenção: Como não temos filmes com o gênero “Todos”, é interessante que, ao selecionar a opção “Todos”, o Cubit faça a busca de filmes sem considerar o gênero (já que gênero “Todos” não existe):
+        onChanged: (String? value) {
+            if (value != null) {
+              value == "Todos" ?
+                widget.homeCubit.getMovies() :
+                widget.homeCubit.getMoviesByGenre(value);
+                //...
+        }
+COPIAR CÓDIGO
+3- Agora, provavelmente o arquivo home.dart está com problemas caso ainda não tenha passado a instância de HomeCubit para o widget GenreFilter. Então, faça como eu fiz:
+
+    /...
+    GenreFilter(homeCubit: homeCubit,),
+    //...
+COPIAR CÓDIGO
+4- Agora, para finalizar essa feature e deixar tudo certinho, é importante que, ao não encontrarmos nenhum filme de determinado gênero, mostremos uma mensagem para a pessoa usuária sobre isso.
+
+Em home.dart, em caso de HomeSuccess, agora vamos adicionar uma condicional verificando se state.movies está vazio. Se estiver vazio, mostramos um texto com "Não existem filmes com este gênero!” e um ícone. Se não estiver vazio, mostramos a lista de filmes exatamente como fazíamos antes:
+        //...
+        else if(state is HomeSuccess) {
+          if(state.movies.isEmpty) {
+                //mensagem com um texto informando o erro e um ícone:
+            return SliverFillRemaining(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const <Widget> [
+                    Icon(Icons.not_interested, size: 30.0,),
+                    SizedBox(height: 16.0,),
+                    Text("Não existem filmes com este gênero!"),
+                  ],
+                ),
+                );
+          } else {
+                // Mesma implementação que já havíamos feito:
+            return SliverGrid.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisExtent: 240,
+              ),
+              itemBuilder: (context, index) {
+                return MovieCard(movie: state.movies[index]);
+              },
+              itemCount: state.movies.length,
+            );
+          }
+        }
+COPIAR CÓDIGO
+E assim finalizamos a nossa feature de busca de filmes por categoria.
+
+Meus parabéns novamente por concluir o desafio!
+
+Caso queira conferir o resultado dessa aula, ele está dividido em dois commits, que você pode acessar nos seguintes links: Solução: Lógica e consumo e Solução: Melhorias de usabilidade.
+Se surgir alguma dúvida ou dificuldade, não hesite em nos procurar no fórum ou na nossa comunidade do Discord! Compartilhe também o resultado do seu desafio nas suas redes utilizando #AprendinaAlura. Ficaremos muito felizes em ver como ficou.
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/commit/1fdeb215616715cfe2e4042edc0b3dd1f75bd316
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/commit/d0fd08f112f3e1d6069756cc9ddbece66f4d9243
+
+@@07
+O que aprendemos?
+
+Nessa aula, você aprendeu como:
+Criar uma nova função para alterar estado da tela Home de acordo com o tema;
+Utilizar o emit para atualizar os estados na função getMoviesByGenre;
+Consumir o Cubit no componente DropdownButton e chamar a função para atualizar o estado;
+Melhorar a usabilidade da aplicação ao personalizar mensagens na tela.
+Meus parabéns por ter concluído esse desafio!
+
+Continuamos o nosso projeto na próxima aula. Encontro você lá!
