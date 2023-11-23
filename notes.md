@@ -1584,3 +1584,365 @@ Melhorar a usabilidade da aplicação ao personalizar mensagens na tela.
 Meus parabéns por ter concluído esse desafio!
 
 Continuamos o nosso projeto na próxima aula. Encontro você lá!
+
+#### 23/11/2023
+
+@04-BLoC Provider
+
+@@01
+Projeto da aula anterior
+
+Você pode revisar o seu código e acompanhar o passo a passo do desenvolvimento do nosso projeto e, se preferir, pode baixar o projeto da aula anterior.
+Bons estudos!
+
+@@02
+Cubit de tema
+
+Anteriormente, lidamos com os estados da tela Home. Para nossa próxima feature, lidaremos com outro estado.
+Temos uma lista de filmes, e cada um deles possui um gênero. Se clicarmos em um filme para verificar suas informações, o MovieScreen deverá alterar o tema da aplicação de acordo com o seu gênero. No caso do suspense, por exemplo, será utilizado um tema escuro.
+
+Onde se localiza o tema da nossa aplicação? No arquivo Main.dart. Vamos acessá-lo e buscar a linha theme, entre as chaves do Widget build. Nela, chamamos a classe MyThemes junto ao método getTheme().
+
+// This widget is the root of your application.
+@override
+Widget build(BuildContext context) {
+  return MaterialApp(
+        //Código omitido
+    theme: MyThemes.getTheme("default"),
+        //Código omitido
+  ); // MaterialApp
+}COPIAR CÓDIGO
+Vamos pensar em quais estados esta variável poderá ter:
+
+O estado inicial (default)
+Outro estado com a nova cor que depende do gênero
+Diferente da Home que possui os estados inicial, de carregamento, de sucesso e de erro, esta tela possui somente dois estados. Neste caso, já que não precisaremos lidar com requisições, respostas e erros, não há necessidade de criar um arquivo específico para esta propriedade.
+
+Criaremos o Cubit acessando o explorador lateral, clicando com o botão direito na pasta "logic/cubit" e selecionando "Novo arquivo" ("New File"). Vamos chamar o arquivo de theme_cubit.dart.
+
+Em seu interior, escreveremos a estrutura básica de criação do Cubit, com uma classe ThemeCubit que estenderá o Cubit.
+
+class ThemeCubit extends CubitCOPIAR CÓDIGO
+No momento em que estendemos o Cubit, devemos tomar cuidado com qual pacote selecionar para a autoimportação. Na lista de sugestões fornecida pelo editor, temos duas opções de "Cubit": uma realiza a importação do pacote "flutter_bloc/flutter" enquanto a outra provém do pacote "bloc/bloc".
+
+Devemos lembrar que estamos lidando com a lógica, na qual não usamos o Flutter BLoC, somente o BLoC padrão. Portanto, é importante verificar se a importação será feita a partir do local correto. Neste caso, devemos selecionar a segunda opção e importar a partir do pacote "bloc/bloc".
+
+Com isso, o código de importação abaixo será gerado no início do arquivo.
+
+import 'package: bloc/bloc.dart';COPIAR CÓDIGO
+O próximo passo é saber com qual tipo de informação lidaremos. Já que se trata de um tema, trabalharemos com o ThemeData, portanto, tiparemos o Cubit para receber um <ThemeData>.
+
+class ThemeCubit extends Cubit<ThemeData>COPIAR CÓDIGO
+Em seguida, podemos importar o ThemeData do pacote "flutter/material".
+
+import 'package: bloc/bloc.dart';
+import 'package: flutter/material.dart';COPIAR CÓDIGO
+Vamos abrir um bloco de chaves para o Cubit<ThemeData> e em seu interior adicionaremos um Construtor ThemeCubit(), seguido do sinal de dois pontos e um Super Construtor super().
+
+class ThemeCubit extends Cubit<ThemeData> {
+    ThemeCubit() : super();
+}COPIAR CÓDIGO
+O editor apontará um erro já que o super() precisa conter o estado inicial do Cubit. Qual será ele?
+
+Vamos acessar o arquivo my_themes.dart dentro da pasta "themes" pelo explorador e verificá-lo detalhadamente (lembrando que já o acessamos brevemente no início do curso).
+
+Em seu interior, temos dois dicionários, dentro dos quais temos vários valores possíveis para os nossos dois cenários. Nestes, não teremos um gênero "todos" como visto no dropdown, nem um valor padrão.
+
+Além dos gêneros, ambos os dicionários possuem valores "default" (padrão) que se aplicam aos casos em que nenhum filme tenha sido selecionado na lista. Eles já possuem propriedades padrão configuradas, dessa forma que não precisaremos configurá-las depois.
+
+abstract class MyThemes {
+  MyThemes();
+
+  static final Map<String, Color> _genreColors = {"default": Colors.white, "Suspense": Colors.red, "Terror": Colors.yellow, "Comédia": Colors.green, "Drama": Colors.red};
+
+  static final Map<String, Brightness> _genreBrightness = {"default": Brightness.light, "Suspense": Brightness.dark, "Terror": Brightness.dark, "Comédia": Brightness.light, "Drama": Brightness.light};
+
+  // Código omitido
+}COPIAR CÓDIGO
+Voltando para o arquivo theme_cubit.dart, entre as chaves do super() chamaremos a classe abstrata MyTheme junto ao método getTheme(), exatamente como vemos na Main (Principal). Por ser abstrata, a classe não precisa ser instanciada.
+
+Quando digitarmos getTheme(), será solicitado um genre entre parênteses. Já que não possuímos nenhum gênero ainda vamos substituí-lo pelo "default".
+
+class ThemeCubit extends Cubit<ThemeData> {
+    ThemeCubit() : super(MyThemes.getTheme("default"));
+}COPIAR CÓDIGO
+Salvaremos o código. Com isso, teremos a primeira estrutura básica do ThemeCubit com o estado inicial configurado.
+
+A seguir, criaremos a função que alterará o estado deste Cubit e vamos chamá-la no local responsável pela troca do tema da aplicação. Nos vemos no próximo vídeo.
+
+@@03
+Cubit e o Provider
+
+Vamos criar a função que altera o estado do ThemeCubit para chamá-la posteriormente.
+No arquivo theme_cubit.dart, abaixo dos construtores ThemeCubit() e super(), criaremos a função void changeTheme() alterará o tema da aplicação e não retornará nada. Entre seus parênteses, ela receberá a informação do gênero com o qual estamos trabalhando por meio de uma String genre.
+
+À sua direita, abriremos um bloco de chaves, dentro do qual adicionaremos um emit() recebendo entre parênteses o MyThemes.getTheme(genre). Esta função alterará o estado do getTheme() de "default" para outro valor baseado no gênero recebido.
+
+class ThemeCubit extends Cubit<ThemeData> {
+    ThemeCubit() : super(MyThemes.getTheme("default"));
+
+        void changeTheme (String genre) {
+            emit(MyThemes.getTheme (genre));
+        }
+}COPIAR CÓDIGO
+Com isso, finalizamos a lógica que altera o tema do nosso Cubit.
+
+Retornando ao arquivo main.dart, teremos que criar uma instância de ThemeCubit, pois precisamos alterar a propriedade theme. Para isso, chamaremos nosso BlocBuilder abaixo desta propriedade, dentro da build.
+
+Onde chamaremos a função changeTheme()? No interior da página movie_screen.dart. Contudo, temos um problema: se enviarmos a instância do ThemeCubit para a árvore de widgets até que ela chegue ao movie_screen.dart, ela deverá atravessar o consultor de todos os widgets. Isso não é muito eficaz.
+
+A solução para este problema é utilizar o Provider com uma injeção de dependência. O BLoC vem preparado com o próprio Provider, chamado BlocProvider. Podemos chamá-lo em nossa Main, voltando ao arquivo main.dart.
+
+Na linha return MaterialApp(), vamos envolver o MaterialApp com um widget, clicando nele com o botão direito e selecionando "Wrap with Widget" ("Envolver com Widget"). Vamos substituir o nome widget por BlocProvider.
+
+@override
+Widget build(BuildContext context) {
+  return BlocProvider(
+        child: MaterialApp(
+
+            //Código omitido
+
+        ); // MaterialApp
+    ); // BlocProvider
+}COPIAR CÓDIGO
+Ele apontará um erro pois pedirá o parâmetro create. Vamos adicioná-lo acima do child: MaterialApp.
+
+Queremos criar um context, portanto o create o receberá como parâmetro de uma função seta que chamará uma instância de ThemeCubit().
+
+Não queremos o MaterialApp diretamente no child pois, para acessar o estado, precisamos do BlocBuilder(). Vamos adicionar este widget em torno do MaterialApp, da mesma maneira que fizemos com o BlocProvider().
+
+Em seguida, abriremos um bloco com sinais de maior e de menor, dentro do qual adicionaremos o ThemeCubit para informar com qual Cubit estamos trabalhando e um ThemeData para informar o tipo de dado.
+
+O BlocBuilder pedirá um builder, o qual adicionaremos no interior de seus parênteses. À direita deste, vamos inserir uma função seta que receberá como parâmetros um context e um state.
+
+Vamos apagar a vírgula no final dessa linha, apagar o child do MaterialApp que não será mais necessário e indentar a linha, movendo o MaterialApp para a direita da função seta.
+
+@override
+Widget build(BuildContext context) {
+  return BlocProvider(
+        create: (context) => ThemeCubit(),
+        child: BlocBuilder<ThemeCubit, ThemeData>(
+            builder: (context, state) => MaterialApp(
+
+                //Código omitido
+
+            ); // MaterialApp
+        ); // BlocProvider
+    ); // BlocBuilder
+}COPIAR CÓDIGO
+Com isso, nosso BlocBuilder() possuirá uma função anônima que recebe um context e um state, devolvendo o MaterialApp criado anteriormente.
+
+Em seguida, acessaremos a linha da propriedade theme e substituiremos o seu valor MyThemes.getTheme("default") pelo nosso state.
+
+@override
+Widget build(BuildContext context) {
+  return BlocProvider(
+        create: (context) => ThemeCubit(),
+        child: BlocBuilder<ThemeCubit, ThemeData>(
+            builder: (context, state) => MaterialApp(
+                //Código omitido
+                theme: state,
+                //Código omitido
+            ); // MaterialApp
+        ); // BlocProvider
+    ); // BlocBuilder
+}COPIAR CÓDIGO
+Salvaremos o código e o testaremos. Faremos um hot reload e veremos no emulador que nada mudou. Isso era esperado, afinal o tema padrão que definimos no ThemeCubit é o "default". Para que o tema mude, devemos chamar a função changeTheme().
+
+Acessando o emulador, descobriremos que o momento ideal para chamar a changeTheme() é após o clique em um filme, quando a aplicação nos direciona para a sua tela — ou seja, devemos chamá-la dentro da função build, antes de renderizarmos o conteúdo da página.
+
+Acessaremos o arquivo movie_screen.dart, onde buscaremos a linha Widget build(BuildContext context) que construirá nossa tela do filme. Entre suas chaves, acima do primeiro comando, chamaremos o ThemeCubit do BlocProvider por meio de uma instância final themeCubit que receberá a função context. read<ThemeCubit>(), onde context é o local de origem e ThemeCubit é o tipo de Cubit.
+
+@override
+Widget build(BuildContext context) {
+  final themeCubit = context.read<ThemeCubit>();
+  return Scaffold(
+    // Código omitido
+  );
+}COPIAR CÓDIGO
+Importaremos o ThemeCubit do "logic/cubit/theme_cubit" e o read() do "flutter_bloc".
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+// Código omitido
+import ../logic/cubit/theme_cubit.dart';COPIAR CÓDIGO
+Com isso, o código não apontará mais erros e adquirimos acesso ao ThemeCubit e tudo que está em seu interior.
+
+Abaixo da linha final themeCubit = context.read<ThemeCubit>();, adicionaremos o themeCubit e com ele chamaremos nossa função changeTheme(), que deverá receber entre parênteses um gênero. Onde conseguiremos essa informação?
+
+Essa página recebe o objeto Movie, que possui como uma de suas propriedades o genre que corresponde ao gênero do filme. Portanto, adicionaremos um movie.genre entre os parênteses da função.
+
+@override
+Widget build(BuildContext context) {
+  final themeCubit = context.read<ThemeCubit>();
+    themeCubit.changeTheme(movie.genre);
+  return Scaffold(
+    // Código omitido
+  );
+}COPIAR CÓDIGO
+Salvaremos o código e iremos ao emulador. Se clicarmos no filme "Inception", do gênero "Suspense", veremos que será carregado o tema escuro. Se voltarmos para a Home, o tema continuará assim. Contudo, se acessarmos outra categoria, como "Drama", e clicarmos em um filme dela, veremos o tema claro com a barra de informações e as fontes em vermelho.
+
+Se clicarmos em um filme da categoria "Comédia", veremos o tema claro com a barra de informações e as fontes em verde. Para os filme da categoria "Terror", o tema se torna escuro com fontes amarelas.
+
+Com isso, terminamos de implementar todas as features que fomos contratados para criar. A seguir, recapitularemos o que foi feito e aprendido neste curso. Nos vemos no próximo vídeo!
+
+@@04
+Alterando o tema do App com BlocProvider
+
+No app, quando clicamos em um filme, somos direcionados para a tela MovieScreen, e quando essa tela é carregada, o tema da aplicação deve ser alterado de acordo com o gênero do filme selecionado. Assim, chegamos na seguinte situação:
+A propriedade que queremos alterar está dentro do arquivo main.dart;
+Precisamos chamar a função de troca de tema no arquivo movie_screen.dart;
+Para lidar com esse problema, você decidiu utilizar o BlocProvider para fazer uma injeção de dependência e agora precisa fazer as alterações no código.
+
+Selecione a alternativa que apresenta a forma correta de utilizar o BlocProvider:
+
+No arquivo main.dart, vamos envolver a estrutura de widgets da tela MovieScreen, fornecendo uma instância do ThemeCubit.
+ 
+Alternativa correta
+No arquivo movie_screen.dart, vamos envolver o widget MaterialApp com o widget BlocProvider, fornecendo uma instância do ThemeCubit.
+ 
+Alternativa correta
+No arquivo movie_screen.dart, vamos envolver a estrutura de widgets da tela MovieScreen com o widget BlocProvider, fornecendo uma instância do ThemeCubit.
+ 
+Alternativa correta
+No arquivo main.dart, vamos envolver o MaterialApp com o widget BlocProvider, fornecendo uma instância do ThemeCubit.
+ 
+Temos que chamar o BlocProvider no arquivo main.dart porque é na construção do MaterialApp que precisamos chamar um BlocBuilder para alterar o estado da propriedade theme:, mas precisamos chamar a função que altera esse estado dentro do arquivo movie_screen.dart através da instância recebida no contex.read<ThemeCubit>().
+
+@@5
+Faça como eu fiz: mudando tema da aplicação
+
+Hora da prática!
+Em nossa última aula, aprendemos como utilizar o BlocProvider para fornecer um Cubit (ThemeCubit) para toda a árvore de widgets, mudando o tema de toda a aplicação.
+
+Agora é a sua vez de implementar essa funcionalidade. Siga os seguintes passos:
+
+Passo 1: Crie um novo Cubit, que pode se chamar ThemeCubit;
+Passo 2: Ainda em ThemeCubit, crie uma função para mudar o tema da aplicação, que pode se chamar changeTheme;
+Passo 3: No arquivo main.dart, use o BlocProvider para fornecer o ThemeCubit para toda a aplicação;
+Passo 4: Em movie_screen.dart, leia o atual estado de ThemeCubit e altere usando o gênero do filme que você já recebe na classe MovieScreen.
+Vamos lá?
+
+Parabéns por ter concluído mais uma aula!
+Vou mostrar em mais detalhes como implementei essa última feature:
+
+1) Primeiro, criei um novo arquivo chamado theme_cubit.dart, com o Cubit ThemeCubit. Esse novo Cubit tem as seguintes características:
+
+Seu estado é do tipo ThemeData, pois lidaremos com o tema da aplicação;
+O seu construtor possui o estado inicial vindo de MyThemes (especificamente, o tema “default”), onde temos todos os temas da aplicação;
+Dentro dele devemos ter uma função, que chamei de changeTheme cujo objetivo é mudar o tema. Ela recebe como parâmetro uma String com o gênero e atualiza o estado da aplicação com o emit, enviando um novo estado (o qual é retornado por MyThemes.getTheme(genre)).
+Veja abaixo como o código fica:
+
+    class ThemeCubit extends Cubit<ThemeData> {
+      ThemeCubit() : super(MyThemes.getTheme("default"));
+
+      void changeTheme(String genre) {
+        emit(MyThemes.getTheme(genre));
+      }
+    }COPIAR CÓDIGO
+2) No arquivo main.dart, envolvi o MaterialApp com o BlocProvider de modo a fornecer o ThemeCubit para toda a aplicação. E o BlocProvider vai precisar de algumas propriedades para funcionar:
+
+Em create, chamei uma função anônima, que deve receber o contexto (context) e retornar o Cubit que criei (ThemeCubit);
+Em child, passei algo que já conhecemos, o BlocBuilder, com o Cubit ThemeCubit e tipo ThemeData:
+        @override
+          Widget build(BuildContext context) {
+            return BlocProvider(
+              create: (context) => ThemeCubit(),
+              child: BlocBuilder<ThemeCubit, ThemeData>(
+                     //...
+              ),
+            );
+          }COPIAR CÓDIGO
+E, dentro do builder (propriedade do BlocBuilder), passamos o nosso MaterialApp;
+Dentro do MaterialApp teremos apenas uma pequena mudança: o theme agora será o state do Cubit, e não um tema estático como estava antes.
+Veja abaixo o resultado dessas mudanças:
+
+    @override
+      Widget build(BuildContext context) {
+        return BlocProvider(
+          create: (context) => ThemeCubit(),
+          child: BlocBuilder<ThemeCubit, ThemeData>(
+            builder: (context, state) => MaterialApp(
+              title: 'Bilheteria Panucci',
+              theme: state,
+              home: const Home(),
+            ),
+          ),
+        );
+      }COPIAR CÓDIGO
+3) Por último, em movie_screen.dart, criei uma instância de ThemeCubit, usando o context.read<ThemeCubit>() e chamei a função changeTheme passando como parâmetro o gênero do filme que atualmente está sendo exibido na tela.
+
+Veja abaixo como o código fica:
+
+    class MovieScreen extends StatelessWidget {
+      @override
+      Widget build(BuildContext context) {
+        final themeCubit = context.read<ThemeCubit>();
+        themeCubit.changeTheme(movie.genre);
+            //...
+        }
+    }COPIAR CÓDIGO
+Com isso, a aplicação deve alterar o tema de acordo com a categoria ao entrar na tela de detalhes do filme, utilizando o ThemeCubit e BlocProvider.
+
+Espero que essas orientações tenham lhe ajudado a colocar em prática o que aprendemos e compreender melhor a implementação. Se tiver qualquer dúvida, conte com a gente no fórum e no Discord!
+Caso queira conferir o resultado dessa aula, ele está dividido em dois commits, que você pode acessar nos seguintes links: Cubit de Tema e Cubit e Provider.
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/commit/064e5eb3ebfc9461ca5cbdcd6c0f192b1ef01f90
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/commit/510a26940952d3dbe6651f6598834d87518dcc58
+
+@@06
+Projeto final
+
+Você pode baixar ou acessar o código-fonte do projeto final.
+Aproveite para explorá-lo e revisar pontos importantes do curso.
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/archive/refs/heads/Aula4.zip
+
+https://github.com/alura-cursos/3033-bloc-com-cubit/tree/Aula4
+
+@@07
+O que aprendemos?
+
+Parabéns por ter finalizado a nossa última aula. Você aprendeu como:
+Criar um novo Cubit com uma nova funcionalidade: a troca de tema por gênero;
+Utilizar o BlocProvider para injeção da instância de ThemeCubit na tela MovieScreen.
+Parabéns! Concluímos as implementações no app!
+
+@@08
+Recados finais
+
+Parabéns, você chegou ao fim do nosso curso. Tenho certeza que esse mergulho foi de muito aprendizado.
+Após os créditos finais do curso, você será redirecionado para uma tela na qual poderá deixar seu feedback e avaliação do curso. Sua opinião é muito importante para nós.
+
+Aproveite para conhecer a nossa comunidade no Discord da Alura e se conectar com outras pessoas com quem pode conversar, aprender e aumentar seu networking.
+
+Continue mergulhando com a gente.
+
+https://discord.com/invite/QeBdgAjXnn
+
+@@09
+Conclusão
+
+Gostaríamos de te parabenizar por chegar até aqui e completar o Curso de Flutter BLoC com Cubit!
+Vamos recapitular as features implementadas neste projeto:
+
+A tela Home, onde temos uma lista de filmes carregada da API
+O filtro de gênero, com o qual filtramos os filmes conforme a categoria escolhida
+A troca de cor do tema da aplicação conforme o gênero, acionada quando abrimos a página de informações de um filme.
+Com essas implementações, nós aprendemos a:
+
+Separar o projeto em camadas (componentes visuais, modelos, telas e temas)
+Utilizar o padrão de gerenciamento de estados BLoC para criar a camada de lógica
+Utilizar o Home Cubit para carregar, tratar e devolver informações da API para a tela
+Lidar com os estados da tela Home (inicial, de carregamento, de sucesso e de erro) criando o arquivo home_states.dart para representá-los
+Chamar e recolher informações da Home por meio do BlocBuilder
+Identificar os tipos de BLoC e os tipos de estado
+Identificar as diferenças entre BLoC e Cubit e onde utilizá-los
+Utilizar o BlocProvider com injeção de dependência na Main para lidar com BLoCs e Cubits em vários locais da aplicação
+Faça parte da nossa Comunidade no Discord. Além disso, pedimos que avalie este curso para que possamos melhorar cada vez mais o nosso conteúdo.
+
+Também é importante que você compartilhe seu projeto nas redes sociais, adicionando a hashtag #aprendinaalura.
+
+Nos vemos no próximo curso. Até breve!
+
+https://discord.com/invite/SK9bj7hEYD
